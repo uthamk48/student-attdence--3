@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Attendance System</title>
+  <style>
+    .box {
+      background-color: rgb(249, 250, 252);
+      width: auto;
+      height: 300px;
+      border-radius: 9px;
+      border: 1px solid black;
+      padding: 20px;
+      position: relative;
+      
+    }
+
+    .box h2 {
+      background-color: rgb(31, 64, 211);
+      text-align: center;
+      color: white;
+      margin-top: -20px;
+      margin-bottom: 10px;
+      padding: 10px;
+      border-top-right-radius: 7px;
+      border-top-left-radius: 7px;
+      position:relative;
+      width:1328px;
+      left:-20px;
+    }
+
+    #clock {
+      position: absolute;
+      top: 50%;
+      right: 20px;
+      transform: translateY(-50%);
+      width: 90px;
+      height: 90px;
+      border: 1px solid black;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: bold;
+      background-color: white;
+      color: black;
+      text-align: center;
+      line-height: 1.2;
+      padding: 5px;
+    }
+
+    .box input {
+      width: 200px;
+      padding: 5px;
+      border: 1px solid black;
+      margin-bottom: 10px;
+    }
+
+    .box button {
+      background-color: rgb(31, 64, 211);
+      color: white;
+      border-radius: 19px;
+      width: 100px;
+      padding: 9px;
+      border: none;
+      cursor: pointer;
+    }
+     .box ul{
+        text-align: center;
+        color:rgb(43, 42, 42);
+
+     
+    }
+    .box h4{
+        position:relative;
+        background-color:black;
+        width:230px;
+        left:560px;
+        height:5px;
+        top:-25px;
+    }
+    .box p {
+      margin-top: 10px;
+    }
+
+    #rollmessage {
+      color: red;
+      font-weight: bold;
+    }
+
+    #locationStatus {
+      color: green;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="box" id="formContainer">
+    <h2>NAGARJUNA GOVERNMENT DEGREE COLLEGE (A)</h2>
+     <h3><ul>COLLEGE ATTENDANCE</ul></h3>
+     <h4></h4>
+    <!-- Always show running time -->
+    <div id="clock">--:--:-- AM</div>
+
+    <div id="formContent">
+      <input type="tel" id="rollnumber" placeholder="Enter your roll number"><br>
+      <button onclick="checkRollNumber()">Submit</button>
+      <p id="rollmessage"></p>
+      <p id="locationStatus">Checking your location...</p>
+      <p>NOTE: YOU MUST ENTER YOUR 15 DIGIT NUMBER AND ALSO BE INSIDE THE COLLEGE ROOM</p>
+    </div>
+  </div>
+
+  <script>
+    // Real-time clock (12-hour format with AM/PM)
+    function updateTime() {
+      const now = new Date();
+      let h = now.getHours();
+      const m = String(now.getMinutes()).padStart(2, '0');
+      const s = String(now.getSeconds()).padStart(2, '0');
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      h = h % 12;
+      h = h ? h : 12;
+      h = String(h).padStart(2, '0');
+      const currentTime = `${h}:${m}:${s} ${ampm}`;
+      document.getElementById("clock").innerText = currentTime;
+    }
+    setInterval(updateTime, 1000);
+    updateTime();
+
+    // Time access: 10:10 AM to 2:00 PM
+    function checkAccessTime() {
+      const now = new Date();
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+      const startMinutes = 10 * 60 + 10;
+      const endMinutes = 14 * 60;
+
+      const formContent = document.getElementById("formContent");
+
+      if (currentMinutes < startMinutes || currentMinutes > endMinutes) {
+        formContent.innerHTML = `
+          <p style="color:red; font-weight:bold;">
+            ❌ You cannot access this website at this time.<br>
+            Attendance is allowed only from <b>10:10 AM to 2:00 PM</b>.
+          </p>`;
+      }
+    }
+    checkAccessTime();
+
+    // Distance calculation (Haversine)
+    function getDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) *
+        Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    }
+
+    let isInCollege = false;
+
+    function checkRollNumber() {
+      const roll = document.getElementById("rollnumber").value.trim();
+      const message = document.getElementById("rollmessage");
+
+      if (roll.length !== 15 || isNaN(roll)) {
+        message.innerHTML = "❌ You entered wrong number";
+      } else if (!isInCollege) {
+        message.innerHTML = "❌ You are not in the college area";
+      } else {
+        message.innerHTML = "✅ Valid Roll Number & Location Verified";
+      }
+    }
+
+    function checkUserLocation() {
+      const status = document.getElementById("locationStatus");
+
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+          const userLat = position.coords.latitude;
+          const userLon = position.coords.longitude;
+
+          const collegeLat = 17.062479;
+          const collegeLon = 79.263176;
+
+          const distance = getDistance(userLat, userLon, collegeLat, collegeLon);
+
+          if (distance <= 0.5) {
+            isInCollege = true;
+            status.innerHTML = "✅ Location Confirmed: You are inside the college";
+          } else {
+            isInCollege = false;
+            status.innerHTML = "❌ You are NOT inside the college area";
+          }
+        }, function(error) {
+          status.innerHTML = "❌ Location access denied or failed.";
+        });
+      } else {
+        status.innerHTML = "❌ Geolocation not supported by your browser.";
+      }
+    }
+    checkUserLocation();
+  </script>
+
+</body>
+</html>
